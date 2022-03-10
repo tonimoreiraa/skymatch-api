@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
+import { afterCreate, BaseModel, beforeCreate, beforeSave, column } from '@ioc:Adonis/Lucid/Orm'
+import UserMatch from './UserMatch'
 
 export default class UserLike extends BaseModel {
   @column({ isPrimary: true })
@@ -19,4 +20,25 @@ export default class UserLike extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
+
+  @beforeCreate()
+  public static async verifyAlreadyExists(like: UserLike) { 
+    if ((await UserLike.query().where('user_id', like.user_id).where('target_id', like.target_id)).length) {
+      throw Error('Este usuário já foi avaliado.')
+    }
+  }
+
+  @afterCreate()
+  public static async verifyMatch(like: UserLike) {
+    if (like.like) {
+      const match = await UserLike
+      .query()
+      .where('user_id', like.target_id)
+      .where('target_id', like.user_id)
+      .where('like', true)
+      if (match.length) {
+        await UserMatch.create({user1_id: like.user_id, user2_id: like.target_id})
+      }
+    }
+  }
 }

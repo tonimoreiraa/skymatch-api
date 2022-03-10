@@ -20,6 +20,13 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 
-Route.get('/', async () => {
-  return { hello: 'world' }
-})
+// Auth routes
+Route.post('/users/validate-email', 'AuthController.createEmailValidation')
+Route.post('/auth/register', 'AuthController.register')
+Route.post('/auth/login', 'AuthController.login')
+
+Route.group(() => {
+    Route.get('/feed/sugestion', 'FeedsController.avaliate')
+    Route.post('/users/:id/avaliate', 'FeedsController.avaliate')
+    Route.get('/matches', 'FeedsController.getMatches')
+}).middleware('auth')

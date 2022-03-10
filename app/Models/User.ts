@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import Hash from '@ioc:Adonis/Core/Hash'
-import { column, beforeSave, BaseModel } from '@ioc:Adonis/Lucid/Orm'
+import { column, beforeSave, BaseModel, beforeCreate } from '@ioc:Adonis/Lucid/Orm'
+import UserEmailValidationSecretKey from './UserEmailValidationSecretKey'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -10,19 +11,19 @@ export default class User extends BaseModel {
   public name: string
 
   @column()
-  public gender: 'male'|'female'
-
-  @column()
-  public birth_city: string
-
-  @column()
-  public birth_time: Date
-
-  @column()
   public email: string
 
   @column({ serializeAs: null })
   public password: string
+
+  @column()
+  public gender: 'male'|'female'
+
+  @column()
+  public birth_city_id: number
+
+  @column()
+  public birth_time: Date
 
   @column()
   public rememberMeToken?: string
@@ -38,5 +39,11 @@ export default class User extends BaseModel {
     if (user.$dirty.password) {
       user.password = await Hash.make(user.password)
     }
+  }
+
+  @beforeCreate()
+  public static async deleteEmailValidation(user: User) {
+    const validators = await UserEmailValidationSecretKey.query().where('email', user.email)
+    return Promise.all(validators.map(validator => validator.delete()))
   }
 }
