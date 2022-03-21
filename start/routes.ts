@@ -29,4 +29,5 @@ Route.group(() => {
     Route.get('/feed/sugestion', 'FeedsController.avaliate')
     Route.post('/users/:id/avaliate', 'FeedsController.avaliate')
     Route.get('/matches', 'FeedsController.getMatches')
+    Route.resource('/likes', 'LikesController').only(['index', 'store', 'show', 'update', 'destroy'])
 }).middleware('auth')

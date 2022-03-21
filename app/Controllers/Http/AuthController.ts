@@ -14,7 +14,7 @@ export default class AuthController {
 
     async register({request, response, auth}) {
         await request.validate(CreateUserValidator)
-        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password'])
+        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography'])
         
         // validate verification code
         const verification_code = request.input('verification_code')

@@ -8,6 +8,7 @@ export default class UsersSchema extends BaseSchema {
       table.increments('id').primary()
       table.string('name', 255).notNullable()
       table.string('email', 255).notNullable()
+      table.string('biography', 255)
       table.string('gender', 16).notNullable()
       table.integer('birth_city_id').notNullable().references('cities.id')
       table.datetime('birth_time').notNullable()
