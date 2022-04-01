@@ -30,4 +30,7 @@ Route.group(() => {
     Route.post('/users/:id/avaliate', 'FeedsController.avaliate')
     Route.get('/matches', 'FeedsController.getMatches')
     Route.resource('/likes', 'LikesController').only(['index', 'store', 'show', 'update', 'destroy'])
+    Route.get('/chats', 'ChatsController.index')
+    Route.resource('/messages', 'MessagesController').only(['store'])
+    Route.get('/chats/:id/messages', 'MessagesController.listMessages')
 }).middleware('auth')
