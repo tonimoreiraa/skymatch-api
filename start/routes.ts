@@ -26,7 +26,8 @@ Route.post('/auth/register', 'AuthController.register')
 Route.post('/auth/login', 'AuthController.login')
 
 Route.group(() => {
-    Route.get('/feed/sugestion', 'FeedsController.avaliate')
+    Route.get('/feed/random', 'FeedsController.randomUser')
+    Route.post('/feed/:target_id/mark-viewed', 'FeedsController.markViewed')
     Route.post('/users/:id/avaliate', 'FeedsController.avaliate')
     Route.get('/matches', 'FeedsController.getMatches')
     Route.resource('/likes', 'LikesController').only(['index', 'store', 'show', 'update', 'destroy'])
