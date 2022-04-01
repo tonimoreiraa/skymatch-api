@@ -4,7 +4,8 @@ import User from "App/Models/User"
 import UserEmailValidationSecretKey from "App/Models/UserEmailValidationSecretKey"
 import CreateEmailValidationValidator from "App/Validators/CreateEmailValidationValidator"
 import CreateUserValidator from "App/Validators/CreateUserValidator"
-
+import { v4 as uuid } from 'uuid'
+import Application from '@ioc:Adonis/Core/Application'
 export default class AuthController {
     async createEmailValidation({request}) {
         await request.validate(CreateEmailValidationValidator)
@@ -16,6 +17,13 @@ export default class AuthController {
         await request.validate(CreateUserValidator)
         const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography'])
         
+        // upload photo
+        const profilePhoto = request.file('profile_photo')
+        const profilePhotoPath = uuid() + '.' + profilePhoto.extname
+        profilePhoto.clientName = profilePhotoPath
+        await profilePhoto.move(Application.tmpPath('uploads'))
+        data.profile_photo = profilePhotoPath
+
         // validate verification code
         const verification_code = request.input('verification_code')
         const validator = await UserEmailValidationSecretKey.query().where('email', data.email).where('secret_key', verification_code)
