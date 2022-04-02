@@ -6,6 +6,7 @@ import CreateEmailValidationValidator from "App/Validators/CreateEmailValidation
 import CreateUserValidator from "App/Validators/CreateUserValidator"
 import { v4 as uuid } from 'uuid'
 import Application from '@ioc:Adonis/Core/Application'
+import UserSocketToken from "App/Models/UserSocketToken"
 export default class AuthController {
     async createEmailValidation({request}) {
         await request.validate(CreateEmailValidationValidator)
@@ -48,5 +49,10 @@ export default class AuthController {
         } catch {
             return response.badRequest({message: 'Credenciais inválidas.'})
         }
+    }
+
+    async genSocketToken({auth}) {
+        const token = await UserSocketToken.create({user_id: auth.user.id})
+        return token.serialize()
     }
 }

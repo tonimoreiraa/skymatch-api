@@ -26,6 +26,7 @@ Route.post('/auth/register', 'AuthController.register')
 Route.post('/auth/login', 'AuthController.login')
 
 Route.group(() => {
+    Route.get('/auth/generate-device-token', 'AuthController.genSocketToken')
     Route.get('/feed/random', 'FeedsController.randomUser')
     Route.post('/feed/:target_id/mark-viewed', 'FeedsController.markViewed')
     Route.post('/users/:id/avaliate', 'FeedsController.avaliate')
