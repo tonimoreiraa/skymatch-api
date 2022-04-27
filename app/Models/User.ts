@@ -32,6 +32,15 @@ export default class User extends BaseModel {
   public birth_time: Date
 
   @column()
+  public sun: number
+
+  @column()
+  public moon: number
+
+  @column()
+  public ascendant: number
+
+  @column()
   public rememberMeToken?: string
 
   @column.dateTime({ autoCreate: true })
