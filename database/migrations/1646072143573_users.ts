@@ -13,9 +13,9 @@ export default class UsersSchema extends BaseSchema {
       table.string('gender', 16).notNullable()
       table.integer('birth_city_id').notNullable().references('cities.id')
       table.datetime('birth_time').notNullable()
-      table.decimal('sun')
-      table.decimal('moon')
-      table.decimal('ascendant')
+      table.decimal('sun', 3, 14)
+      table.decimal('moon', 3, 14)
+      table.decimal('ascendant', 3, 14)
       table.string('password', 180).notNullable()
       table.string('remember_me_token').nullable()
 

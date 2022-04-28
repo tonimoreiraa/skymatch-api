@@ -17,13 +17,14 @@ export default class FeedsController {
     }
 
     async randomUser({auth, response}) {
-        const userId = auth.user.id
-        const randomUser = (await Database.rawQuery(`SELECT * FROM users WHERE id != ${userId} AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${userId}) LIMIT 1`))
+        const user = auth.user
+        const calc = `ABS(((sun - ${user.sun}) + (moon - ${user.moon}) + (ascendant - ${user.ascendant}))/10.8)`
+        const users = await Database.rawQuery(`SELECT *, ${calc} as compatibility FROM users WHERE id != ${user.id} AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id}) ORDER BY ${calc} DESC;`) 
 
-        if (!randomUser.rows.length) {
+        if (!users.rows.length) {
             return response.noContent()
         }
-        return randomUser.rows[0]
+        return users.rows[0]
     }
 
     async avaliate({request, auth, response}) {
