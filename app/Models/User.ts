@@ -35,10 +35,19 @@ export default class User extends BaseModel {
   public sun: number
 
   @column()
+  public sun_name: number
+
+  @column()
   public moon: number
 
   @column()
+  public moon_name: string
+    
+  @column()
   public ascendant: number
+
+  @column()
+  public ascendant_name: string
 
   @column()
   public rememberMeToken?: string

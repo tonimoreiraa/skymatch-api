@@ -10,6 +10,27 @@ import UserSocketToken from "App/Models/UserSocketToken"
 import AstrologicoApi from "App/Api/AstrologicoApi"
 import City from "App/Models/City"
 export default class AuthController {
+
+    async calculate(cityId: number, birthTime: Date|string): Promise<{sun: number, moon: number, ascendant: number, sunName: string, moonName: string, ascendantName: string}> {
+        const city = await City.findOrFail(cityId)
+        const { data: dateConversion } = await AstrologicoApi.post('/dateconversion', {
+            timestamp: new Date(birthTime).getTime(),
+            location: [city.latitude, city.longitude]
+        })
+        if (dateConversion.status != 'OK') {
+            throw new Error('O limite diário de usuários foi atingido, tente novamente mais tarde.')
+        }
+        const zodiac = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces']
+        return {
+            sun: dateConversion.date.sun,
+            moon: dateConversion.date.moon,
+            ascendant: dateConversion.date.ascendant,
+            sunName: zodiac[Math.floor(dateConversion.date.sun / 30)],
+            moonName: zodiac[Math.floor(dateConversion.date.moon / 30)],
+            ascendantName: zodiac[Math.floor(dateConversion.date.ascendant / 30)]
+        }
+    }
+
     async createEmailValidation({request}) {
         await request.validate(CreateEmailValidationValidator)
         const email = request.input('email')
@@ -26,6 +47,17 @@ export default class AuthController {
             profilePhoto.clientName = profilePhotoPath
             await profilePhoto.move(Application.tmpPath('uploads'))
             data.profile_photo = profilePhotoPath
+        }
+
+        // calculate
+        if (auth.user.birth_city_id != data.birth_city_id || auth.user.birth_time != data.birth_time) {
+            const planets = await this.calculate(data.birth_city_id, data.birth_time)
+            data.sun = planets.sun
+            data.sun_name = planets.sunName
+            data.moon = planets.moon
+            data.moon_name = planets.moonName
+            data.ascendant = planets.ascendant
+            data.ascendant_name = planets.ascendantName
         }
 
         // update user
@@ -51,17 +83,13 @@ export default class AuthController {
         if (!validator.length) return response.badRequest({message: 'Código de verificação inválido.'})
 
         // get planets positions at birth
-        const city = await City.findOrFail(data.birth_city_id)
-        const { data: dateConversion } = await AstrologicoApi.post('/dateconversion', {
-            timestamp: new Date(data.birth_time).getTime(),
-            location: [city.latitude, city.longitude]
-        })
-        if (dateConversion.status != 'OK') {
-            return response.status(503).json({message: 'O limite diário de usuários foi atingido, tente novamente mais tarde.'})
-        }
-        data.sun = dateConversion.date.sun
-        data.moon = dateConversion.date.moon
-        data.ascendant = dateConversion.date.ascendant
+        const planets = await this.calculate(data.birth_city_id, data.birth_time)
+        data.sun = planets.sun
+        data.sun_name = planets.sunName
+        data.moon = planets.moon
+        data.moon_name = planets.moonName
+        data.ascendant = planets.ascendant
+        data.ascendant_name = planets.ascendantName
 
         // create user
         const user = await User.create(data)
