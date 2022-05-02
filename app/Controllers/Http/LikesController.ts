@@ -6,8 +6,16 @@ import { schema, rules } from '@ioc:Adonis/Core/Validator'
 export default class LikesController {
     async index({auth}) {
         const userId = auth.user.id
-        const likes = await UserLike.query().where('user_id', userId)
-        return likes.map(like => like.serialize())
+        const likes = await UserLike.query().where('user_id', userId).preload('target')
+        return likes.map(like => like.serialize({
+            relations: {
+                target: {
+                    fields: {
+                        pick: ['id', 'profile_photo', 'name', 'email', 'biography', 'gender', 'sun_name', 'moon_name', 'ascendant_name']
+                    }
+                }
+            }
+        }))
     }
 
     async show({request}) {

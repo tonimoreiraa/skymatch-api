@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
-import { afterCreate, BaseModel, beforeCreate, column } from '@ioc:Adonis/Lucid/Orm'
+import { afterCreate, BaseModel, beforeCreate, BelongsTo, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
 import UserMatch from './UserMatch'
+import User from './User'
 
 export default class UserLike extends BaseModel {
   @column({ isPrimary: true })
@@ -9,8 +10,14 @@ export default class UserLike extends BaseModel {
   @column()
   public user_id: number
 
+  @belongsTo(() => User, {foreignKey: 'user_id'})
+  public user: BelongsTo<typeof User>
+
   @column()
   public target_id: number
+
+  @belongsTo(() => User, {foreignKey: 'target_id'})
+  public target: BelongsTo<typeof User>
 
   @column()
   public like: boolean
