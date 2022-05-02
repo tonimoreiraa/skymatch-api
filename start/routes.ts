@@ -25,6 +25,11 @@ Route.post('/users/validate-email', 'AuthController.createEmailValidation')
 Route.post('/auth/register', 'AuthController.register')
 Route.post('/auth/login', 'AuthController.login')
 
+// Location routes
+Route.get('/locations/countries', 'CitiesController.getCountries')
+Route.get('/locations/states', 'CitiesController.getStates')
+Route.get('/locations/cities', 'CitiesController.getCities')
+
 Route.group(() => {
     Route.get('/auth/generate-device-token', 'AuthController.genSocketToken')
     Route.get('/feed/random', 'FeedsController.randomUser')
@@ -40,4 +45,5 @@ Route.group(() => {
     
     // profile
     Route.patch('/profile', 'AuthController.editProfile')
+
 }).middleware('auth')

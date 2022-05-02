@@ -14,10 +14,10 @@ export default class City extends BaseModel {
   @column()
   public country: string
 
-  @column()
+  @column({ serializeAs: null })
   public latitude: number
 
-  @column()
+  @column({ serializeAs: null })
   public longitude: number
 
   @column.dateTime({ autoCreate: true })
