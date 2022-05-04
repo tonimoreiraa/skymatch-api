@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
-import { BaseModel, beforeCreate, column } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, beforeCreate, BelongsTo, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
 import { v4 as uuid } from 'uuid'
+import User from './User'
 
 export default class UserSocketToken extends BaseModel {
   @column({ isPrimary: true })
@@ -8,6 +9,9 @@ export default class UserSocketToken extends BaseModel {
 
   @column()
   public user_id: number
+
+  @belongsTo(() => User, {foreignKey: 'user_id'})
+  public user: BelongsTo<typeof User>
 
   @column()
   public token: string

@@ -2,7 +2,6 @@ import { DateTime } from 'luxon'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { column, beforeSave, BaseModel, beforeCreate } from '@ioc:Adonis/Lucid/Orm'
 import UserEmailValidationSecretKey from './UserEmailValidationSecretKey'
-
 export default class User extends BaseModel {
   @column({ isPrimary: true })
   public id: number
@@ -69,5 +68,10 @@ export default class User extends BaseModel {
   public static async deleteEmailValidation(user: User) {
     const validators = await UserEmailValidationSecretKey.query().where('email', user.email)
     return Promise.all(validators.map(validator => validator.delete()))
+  }
+
+  public async getSocketSessionsIDs() {
+    const sockets = await Redis.lrange('user-sessions:' + this.id)
+    return sockets
   }
 }
