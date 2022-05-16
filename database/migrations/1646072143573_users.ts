@@ -21,6 +21,10 @@ export default class UsersSchema extends BaseSchema {
       table.string('ascendant_name')
       table.string('password', 180).notNullable()
       table.string('remember_me_token').nullable()
+      table.string('preffered_genders').notNullable()
+      table.integer('preffered_age_diff').notNullable()
+      table.decimal('latitude', 17, 14)
+      table.decimal('longitude', 17, 14)
 
       /**
        * Uses timestampz for PostgreSQL and DATETIME2 for MSSQL

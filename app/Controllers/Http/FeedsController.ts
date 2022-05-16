@@ -65,7 +65,9 @@ export default class FeedsController {
                 ABS(${user.moon/30} - moon/30) as moon,
                 ABS(${user.ascendant/30} - ascendant/30) as ascendant,
                 id as user_id
-            FROM users WHERE gender IN (${user.preffered_genders.map(gender => '\'' + gender + '\'').join(', ')}) AND preffered_genders LIKE '%"${user.gender}"%' AND id != ${user.id} AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id})) as user_compatibility) as data ORDER BY compatibility LIMIT 1`)
+            FROM users WHERE
+            (abs(EXTRACT(epoch FROM birth_time - '${user.birth_time.toISOString()}')/86400) <= ${user.preffered_age_diff * 366})
+            AND (abs(EXTRACT(epoch FROM birth_time - '${user.birth_time.toISOString()}')/86400) <= preffered_age_diff * 366) AND gender IN (${user.preffered_genders.map(gender => '\'' + gender + '\'').join(', ')}) AND preffered_genders LIKE '%"${user.gender}"%' AND id != ${user.id} AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id})) as user_compatibility) as data ORDER BY compatibility LIMIT 1`)
 
         if (!users.rows.length) {
             return response.noContent()

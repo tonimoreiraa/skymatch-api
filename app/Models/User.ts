@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import Hash from '@ioc:Adonis/Core/Hash'
-import { column, beforeSave, BaseModel, beforeCreate } from '@ioc:Adonis/Lucid/Orm'
+import { column, beforeSave, BaseModel, beforeCreate, afterFetch } from '@ioc:Adonis/Lucid/Orm'
 import UserEmailValidationSecretKey from './UserEmailValidationSecretKey'
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -51,6 +51,21 @@ export default class User extends BaseModel {
   @column()
   public rememberMeToken?: string
 
+  @column({
+    prepare: (value: string) => JSON.stringify(value),
+    consume: (value: string) => JSON.parse(value),
+  })
+  public preffered_genders: string[]
+
+  @column()
+  public preffered_age_diff: number
+
+  @column()
+  public local_latitude: number
+  
+  @column()
+  public local_longitude: number
+
   @column.dateTime({ autoCreate: true })
   public created_at: DateTime
 
@@ -58,7 +73,7 @@ export default class User extends BaseModel {
   public updated_at: DateTime
 
   @beforeSave()
-  public static async hashPassword (user: User) {
+  public static async parse(user: User) {
     if (user.$dirty.password) {
       user.password = await Hash.make(user.password)
     }
