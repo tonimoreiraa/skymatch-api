@@ -26,7 +26,7 @@ export default class CreateUserValidator {
   public schema = schema.create({
     name: schema.string({}),
     biography: schema.string({}),
-    profile_photo: schema.file({size: '2mb', extnames: ['jpg', 'png']}),
+    // profile_photo: schema.file({size: '2mb', extnames: ['jpg', 'png']}),
     email: schema.string({}, [
       rules.email(), rules.unique({
         table: 'users',

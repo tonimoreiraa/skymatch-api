@@ -50,7 +50,7 @@ export default class AuthController {
         }
 
         // calculate
-        if (auth.user.birth_city_id != data.birth_city_id || auth.user.birth_time != data.birth_time) {
+        if ((data.birth_city_id && auth.user.birth_city_id != data.birth_city_id) || (data.birth_time && auth.user.birth_time != data.birth_time)) {
             const planets = await this.calculate(data.birth_city_id, data.birth_time)
             data.sun = planets.sun
             data.sun_name = planets.sunName
@@ -68,14 +68,18 @@ export default class AuthController {
 
     async register({request, response, auth}) {
         await request.validate(CreateUserValidator)
-        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography'])
+        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography', 'preffered_genders', 'preffered_age_diff'])
         
         // upload photo
         const profilePhoto = request.file('profile_photo')
-        const profilePhotoPath = uuid() + '.' + profilePhoto.extname
-        profilePhoto.clientName = profilePhotoPath
-        await profilePhoto.move(Application.tmpPath('uploads'))
-        data.profile_photo = profilePhotoPath
+        if (profilePhoto) {
+            const profilePhotoPath = uuid() + '.' + profilePhoto.extname
+            profilePhoto.clientName = profilePhotoPath
+            await profilePhoto.move(Application.tmpPath('uploads'))
+            data.profile_photo = profilePhotoPath
+        } else {
+            data.profile_photo = 'default-profilephoto.svg'
+        }
 
         // validate verification code
         const verification_code = request.input('verification_code')
