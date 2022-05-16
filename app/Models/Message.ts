@@ -39,6 +39,8 @@ export default class Message extends BaseModel {
 
   @afterCreate()
   public static async sendToTarget(message: Message) {
-    Ws.io.to('user-' + message.to).emit('new-message', {message: message.toJSON()})
+    await message.load('senderUser')
+    await message.load('recipientUser')
+    Ws.io.to('user-' + message.to).emit('new-message', { message: message.serialize() })
   }
 }
