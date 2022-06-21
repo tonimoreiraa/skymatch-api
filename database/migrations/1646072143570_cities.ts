@@ -9,8 +9,8 @@ export default class Cities extends BaseSchema {
       table.string('name').notNullable()
       table.string('state').notNullable()
       table.string('country').notNullable()
-      table.decimal('latitude', 5, 3).notNullable()
-      table.decimal('longitude', 5, 3).notNullable()
+      table.decimal('latitude', 7, 4).notNullable()
+      table.decimal('longitude', 7, 4).notNullable()
 
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL

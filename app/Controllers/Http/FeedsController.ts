@@ -19,7 +19,7 @@ export default class FeedsController {
 
     async randomUser({auth, response}) {
         const user = await User.findOrFail(auth.user.id)
-        const users = await Database.rawQuery(`SELECT (sun + moon + ascendant)/3 as compatibility, user_id FROM (SELECT
+        const users = await Database.rawQuery(`SELECT (sun + moon + ascendant)/3 as compatibility, user_id, distance FROM (SELECT
             CASE WHEN sun < 1 THEN 100
                 WHEN sun < 2 THEN 70
                 WHEN sun < 3 THEN 100
@@ -59,21 +59,31 @@ export default class FeedsController {
                 WHEN ascendant < 11 THEN 100
                 WHEN ascendant < 12 THEN 70
             END as ascendant,
-            user_id
+            user_id,
+            distance,
+            max_distance_diff
             FROM (SELECT
                 ABS(${user.sun/30} - sun/30) as sun,
                 ABS(${user.moon/30} - moon/30) as moon,
                 ABS(${user.ascendant/30} - ascendant/30) as ascendant,
+                (|/ ABS((${user.latitude} - latitude) - (${user.longitude} - longitude)))*111.11 as distance,
+                max_distance_diff,
                 id as user_id
             FROM users WHERE
-            (abs(EXTRACT(epoch FROM birth_time - '${user.birth_time.toISOString()}')/86400) <= ${user.preffered_age_diff * 366})
-            AND (abs(EXTRACT(epoch FROM birth_time - '${user.birth_time.toISOString()}')/86400) <= preffered_age_diff * 366) AND gender IN (${user.preffered_genders.map(gender => '\'' + gender + '\'').join(', ')}) AND preffered_genders LIKE '%"${user.gender}"%' AND id != ${user.id} AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id})) as user_compatibility) as data ORDER BY compatibility LIMIT 1`)
+            (abs(EXTRACT(epoch FROM birth_time - '${user.birth_time.toISOString()}')/86400) <= preffered_age_diff * 366)
+            AND gender IN (${user.preffered_genders.map(gender => '\'' + gender + '\'').join(', ')})
+            AND preffered_genders LIKE '%"${user.gender}"%'
+            AND id != ${user.id}
+            AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id})) as user_compatibility) as data
+            WHERE distance <= ${user.max_distance_diff} AND distance <= max_distance_diff
+            ORDER BY compatibility
+            LIMIT 1`)
 
         if (!users.rows.length) {
             return response.noContent()
         }
         const randomUser = await User.findOrFail(users.rows[0].user_id)
-        return {...randomUser.serialize(), compatibility: users.rows[0].compatibility}
+        return {...randomUser.serialize(), compatibility: users.rows[0].compatibility, distance: users.rows[0].distance}
     }
 
     async avaliate({request, auth, response}) {
@@ -84,7 +94,7 @@ export default class FeedsController {
         await request.validate({schema: schema.create({
             user_id: schema.number([rules.exists({table: 'users', column: 'id'})]),
             target_id: schema.number([rules.exists({table: 'users', column: 'id'})]),
-          }), data: {target_id, user_id}})
+        }), data: {target_id, user_id}})
 
         if (target_id == user_id) return response.badRequest({message: 'Você não pode avaliar a si mesmo.'})
 

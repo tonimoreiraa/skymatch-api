@@ -61,10 +61,13 @@ export default class User extends BaseModel {
   public preffered_age_diff: number
 
   @column()
-  public local_latitude: number
+  public max_distance_diff: number
+
+  @column()
+  public latitude: number
   
   @column()
-  public local_longitude: number
+  public longitude: number
 
   @column.dateTime({ autoCreate: true })
   public created_at: DateTime

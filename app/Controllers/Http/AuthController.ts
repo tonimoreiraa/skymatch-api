@@ -38,7 +38,7 @@ export default class AuthController {
     }
 
     async editProfile({request, auth}) {
-        const data = request.only(['name', 'gender', 'birth_city_id', 'birth_time', 'biography'])
+        const data = request.only(['name', 'gender', 'birth_city_id', 'birth_time', 'biography', 'latitude', 'longitude', 'max_distance_diff', 'preffered_genders'])
         
         // upload photo
         const profilePhoto = request.file('profile_photo', {size: '2mb', extnames: ['jpg', 'png']})
@@ -68,7 +68,7 @@ export default class AuthController {
 
     async register({request, response, auth}) {
         await request.validate(CreateUserValidator)
-        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography', 'preffered_genders', 'preffered_age_diff'])
+        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography', 'preffered_genders', 'preffered_age_diff', 'max_distance_diff'])
         
         // upload photo
         const profilePhoto = request.file('profile_photo')
