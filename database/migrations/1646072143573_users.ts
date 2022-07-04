@@ -22,8 +22,9 @@ export default class UsersSchema extends BaseSchema {
       table.string('password', 180).notNullable()
       table.string('remember_me_token').nullable()
       table.string('preffered_genders').notNullable()
-      table.integer('preffered_age_diff').notNullable()
-      table.integer('max_distance_diff').notNullable()
+      table.integer('preffered_min_age').notNullable()
+      table.integer('preffered_max_age').notNullable()
+      table.integer('max_distance_radar').notNullable()
       table.decimal('latitude', 17, 14)
       table.decimal('longitude', 17, 14)
 

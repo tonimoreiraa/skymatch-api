@@ -68,8 +68,13 @@ export default class AuthController {
 
     async register({request, response, auth}) {
         await request.validate(CreateUserValidator)
-        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography', 'preffered_genders', 'preffered_age_diff', 'max_distance_diff'])
+        const data = request.only(['name', 'email', 'gender', 'birth_city_id', 'birth_time', 'password', 'biography', 'preffered_genders', 'max_distance_radar'])
         
+        // preffered age
+        const prefferedAge = JSON.parse(request.input('preffered_age_interval'))
+        data.preffered_min_age = prefferedAge[0]
+        data.preffered_max_age = prefferedAge[1]
+
         // upload photo
         const profilePhoto = request.file('profile_photo')
         if (profilePhoto) {
@@ -82,7 +87,7 @@ export default class AuthController {
         }
 
         // validate verification code
-        const verification_code = request.input('verification_code')
+        const verification_code = request.input('code')
         const validator = await UserEmailValidationSecretKey.query().where('email', data.email).where('secret_key', verification_code)
         if (!validator.length) return response.badRequest({message: 'Código de verificação inválido.'})
 

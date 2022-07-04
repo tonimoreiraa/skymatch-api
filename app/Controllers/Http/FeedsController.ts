@@ -19,6 +19,9 @@ export default class FeedsController {
 
     async randomUser({auth, response}) {
         const user = await User.findOrFail(auth.user.id)
+        if (typeof(user.preffered_genders) == 'string') user.preffered_genders = JSON.parse(user.preffered_genders)
+
+        const userAge = new Date(new Date() - new Date(user.birth_time)).getUTCFullYear() - 1970
         const users = await Database.rawQuery(`SELECT (sun + moon + ascendant)/3 as compatibility, user_id, distance FROM (SELECT
             CASE WHEN sun < 1 THEN 100
                 WHEN sun < 2 THEN 70
@@ -61,24 +64,27 @@ export default class FeedsController {
             END as ascendant,
             user_id,
             distance,
-            max_distance_diff
+            max_distance_radar
             FROM (SELECT
-                ABS(${user.sun/30} - sun/30) as sun,
-                ABS(${user.moon/30} - moon/30) as moon,
-                ABS(${user.ascendant/30} - ascendant/30) as ascendant,
-                (|/ ABS((${user.latitude} - latitude) - (${user.longitude} - longitude)))*111.11 as distance,
-                max_distance_diff,
-                id as user_id
-            FROM users WHERE
-            (abs(EXTRACT(epoch FROM birth_time - '${user.birth_time.toISOString()}')/86400) <= preffered_age_diff * 366)
-            AND gender IN (${user.preffered_genders.map(gender => '\'' + gender + '\'').join(', ')})
-            AND preffered_genders LIKE '%"${user.gender}"%'
-            AND id != ${user.id}
-            AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id})) as user_compatibility) as data
-            WHERE distance <= ${user.max_distance_diff} AND distance <= max_distance_diff
+                    ABS(${user.sun/30} - sun/30) as sun,
+                    ABS(${user.moon/30} - moon/30) as moon,
+                    ABS(${user.ascendant/30} - ascendant/30) as ascendant,
+                    (|/ ABS((${user.latitude} - latitude) - (${user.longitude} - longitude)))*111.11 as distance,
+                    max_distance_radar,
+                    id as user_id
+                FROM users WHERE
+                (birth_time <= (current_date - '${user.preffered_min_age} years'::interval))
+                AND (birth_time >= (current_date - '${user.preffered_max_age} years'::interval))
+                AND (${userAge} >= preffered_min_age)
+                AND (${userAge} <= preffered_max_age)
+                AND gender IN (${user.preffered_genders.map(gender => '\'' + gender + '\'').join(', ')})
+                AND preffered_genders LIKE '%"${user.gender}"%'
+                AND id != ${user.id}
+                AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id})) as user_compatibility)
+            as data
+            WHERE distance <= ${user.max_distance_radar} AND distance <= max_distance_radar
             ORDER BY compatibility
             LIMIT 1`)
-
         if (!users.rows.length) {
             return response.noContent()
         }
@@ -99,7 +105,10 @@ export default class FeedsController {
         if (target_id == user_id) return response.badRequest({message: 'Você não pode avaliar a si mesmo.'})
 
         const like = await UserLike.create({target_id, user_id, like: liked})
-        return like.serialize()
+
+        const match = !!(await UserLike.query().where('user_id', target_id).where('target_id', target_id).where('like', true)).length
+
+        return {...like.serialize(), match}
     }
 
     async getMatches({auth}) {

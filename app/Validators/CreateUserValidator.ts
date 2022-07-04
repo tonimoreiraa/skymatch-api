@@ -24,25 +24,28 @@ export default class CreateUserValidator {
    *    ```
    */
   public schema = schema.create({
-    name: schema.string({}),
+    name: schema.string({}, [rules.minLength(3)]),
     biography: schema.string({}),
-    // profile_photo: schema.file({size: '2mb', extnames: ['jpg', 'png']}),
+    password: schema.string({}),
+    gender: schema.string({}),
+    preffered_genders: schema.string({}),
+    max_distance_radar: schema.string({}),
+    preffered_age_interval: schema.string({}),
+    profile_photo: schema.file({size: '5mb', extnames: ['jpg', 'png', 'jpeg']}),
     email: schema.string({}, [
       rules.email(), rules.unique({
         table: 'users',
         column: 'email'
       })
     ]),
-    password: schema.string({}),
-    gender: schema.string({}),
-    birth_city_id: schema.number([
+    birth_city_id: schema.string({}, [
       rules.exists({
         table: 'cities',
         column: 'id'
       })
     ]),
     birth_time: schema.date({}),
-    verification_code: schema.number()
+    code: schema.number()
   })
 
   /**
