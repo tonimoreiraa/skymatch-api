@@ -24,6 +24,7 @@ import Route from '@ioc:Adonis/Core/Route'
 Route.post('/users/validate-email', 'AuthController.createEmailValidation')
 Route.post('/auth/register', 'AuthController.register')
 Route.post('/auth/login', 'AuthController.login')
+Route.post('/auth/google-signin', 'AuthController.googleLogin')
 
 // Location routes
 Route.get('/locations/countries', 'CitiesController.getCountries')

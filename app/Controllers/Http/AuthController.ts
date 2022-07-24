@@ -9,6 +9,9 @@ import Application from '@ioc:Adonis/Core/Application'
 import UserSocketToken from "App/Models/UserSocketToken"
 import AstrologicoApi from "App/Api/AstrologicoApi"
 import City from "App/Models/City"
+import Env from '@ioc:Adonis/Core/Env';
+import { google } from "googleapis";
+import Mail from "@ioc:Adonis/Addons/Mail"
 export default class AuthController {
 
     async calculate(cityId: number, birthTime: Date|string): Promise<{sun: number, moon: number, ascendant: number, sunName: string, moonName: string, ascendantName: string}> {
@@ -34,7 +37,16 @@ export default class AuthController {
     async createEmailValidation({request}) {
         await request.validate(CreateEmailValidationValidator)
         const email = request.input('email')
-        await UserEmailValidationSecretKey.create({email})
+        const key = await UserEmailValidationSecretKey.create({email})
+
+        await Mail.send((message) => {
+            message
+            .from(Env.get('SMTP_USERNAME'))
+            .to(email)
+            .subject('Seu código de verificação SkyMatch')
+            .htmlView('verification_code', { code: key.secret_key })
+            .watch('Bem vindo ao SkyMatch, seu código é ' + key.secret_key)
+        })
     }
 
     async editProfile({request, auth}) {
@@ -124,5 +136,42 @@ export default class AuthController {
     async genSocketToken({auth}) {
         const token = await UserSocketToken.create({user_id: auth.user.id})
         return token.serialize()
+    }
+
+    async googleLogin({request, auth}) {
+        const code = request.input('code')
+
+        // get auth token
+        const Oauth2Client = new google.auth.OAuth2(Env.get('GOOGLE_CLIENT_ID'), Env.get('GOOGLE_CLIENT_SECRET'))
+        const { tokens } = await Oauth2Client.getToken(code)
+
+        // create auth client
+        const authClient = new google.auth.OAuth2()
+        authClient.setCredentials({access_token: tokens.access_token})
+
+        // get user data
+        const oauth2 = google.oauth2({version: 'v2', auth: authClient})
+        const {data: userData} = await oauth2.userinfo.get()
+
+        const user = await User.findBy('email', userData.email)
+    
+        if (user) {
+            const {token} = await auth.use('api').generate(user)
+            return { type: 'signin', user: user.serialize(), token }
+        }
+
+        // get birthdays and genders
+        const people = google.people({ version: 'v1', auth: authClient })
+        const {data: data} = await people.people.get({resourceName: 'people/me', personFields: 'birthdays,genders'})
+
+        const birthday = data.birthdays ? data.birthdays[0].date : undefined
+        return {
+            type: 'continue-signup',
+            email: userData.email,
+            name: userData.name,
+            profilePhoto: userData.picture,
+            birthTime: birthday ? new Date(`${birthday.year}-${birthday.month}-${birthday.day}`).getTime() : undefined,
+            gender: data.genders ? data.genders[0].value : undefined,
+        }
     }
 }
