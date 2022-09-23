@@ -20,7 +20,7 @@ export default class UserEmailValidationSecretKey extends BaseModel {
 
   @beforeCreate()
   public static async sendNotification(validation: UserEmailValidationSecretKey) {
-    validation.secret_key = Math.floor(Math.random()*1000000)
+    validation.secret_key = Math.floor(Math.random() * 900000) + 100000
     Logger.info(`O código de validação ${validation.secret_key} foi gerado para o e-mail ${validation.email}`)
   }
 }
