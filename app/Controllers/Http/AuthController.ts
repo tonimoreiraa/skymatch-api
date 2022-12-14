@@ -52,9 +52,12 @@ export default class AuthController {
     async editProfile({request, auth}) {
         const data = request.only(['name', 'gender', 'birth_city_id', 'birth_time', 'biography', 'latitude', 'longitude', 'max_distance_diff', 'preffered_genders'])
 
-        const prefferedAge = JSON.parse(request.input('preffered_age_interval'))
-        data.preffered_min_age = prefferedAge[0]
-        data.preffered_max_age = prefferedAge[1]
+        const prefferedAgeInterval = request.input('preffered_age_interval')
+        if (prefferedAgeInterval) {
+            const prefferedAge = JSON.parse(prefferedAgeInterval)
+            data.preffered_min_age = prefferedAge[0]
+            data.preffered_max_age = prefferedAge[1]
+        }
         
         // upload photo
         const profilePhoto = request.file('profile_photo', {size: '2mb', extnames: ['jpg', 'png']})
@@ -78,6 +81,7 @@ export default class AuthController {
 
         // update user
         const user = await User.updateOrCreate({id: auth.user.id}, data)
+        await user.load('city')
 
         return user.serialize()
     }
@@ -118,6 +122,7 @@ export default class AuthController {
 
         // create user
         const user = await User.create(data)
+        await user.load('city')
 
         const {token} = await auth.use('api').generate(user)
         
@@ -131,6 +136,7 @@ export default class AuthController {
         try {
             const {token} = await auth.use('api').attempt(email, password)
             const user = await User.findByOrFail('email', email)
+            await user.load('city')
             return {user: user.serialize(), token}
         } catch {
             return response.badRequest({message: 'Credenciais inválidas.'})

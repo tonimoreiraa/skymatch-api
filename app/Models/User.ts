@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
 import Hash from '@ioc:Adonis/Core/Hash'
-import { column, beforeSave, BaseModel, afterCreate } from '@ioc:Adonis/Lucid/Orm'
+import { column, beforeSave, BaseModel, afterCreate, belongsTo, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 import UserEmailValidationSecretKey from './UserEmailValidationSecretKey'
+import City from './City'
 export default class User extends BaseModel {
   @column({ isPrimary: true })
   public id: number
@@ -26,6 +27,9 @@ export default class User extends BaseModel {
 
   @column()
   public birth_city_id: number
+
+  @belongsTo(() => City, {foreignKey: 'birth_city_id'})
+  public city: BelongsTo<typeof City>
 
   @column()
   public birth_time: Date

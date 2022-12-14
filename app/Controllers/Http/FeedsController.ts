@@ -7,6 +7,20 @@ import UserFeedView from "App/Models/UserFeedView"
 import Database from "@ioc:Adonis/Lucid/Database"
 import User from "App/Models/User"
 
+function getDistanceFromCoordsInKm(position1, position2) {
+    "use strict";
+    var deg2rad = function (deg) { return deg * (Math.PI/180); },
+        R = 6371,
+        dLat = deg2rad(position2.lat - position1.lat),
+        dLng = deg2rad(position2.lng - position1.lng),
+        a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(deg2rad(position1.lat))
+            * Math.cos(deg2rad(position1.lat))
+            * Math.sin(dLng / 2) * Math.sin(dLng / 2),
+        c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return ((R * c *1000));
+}
+
 export default class FeedsController {
 
     async markViewed({request, auth}) {
@@ -20,9 +34,8 @@ export default class FeedsController {
     async randomUser({auth, response}) {
         const user = await User.findOrFail(auth.user.id)
         if (typeof(user.preffered_genders) == 'string') user.preffered_genders = JSON.parse(user.preffered_genders)
-
         const userAge = new Date(new Date() - new Date(user.birth_time)).getUTCFullYear() - 1970
-        const users = await Database.rawQuery(`SELECT (sun + moon + ascendant)/3 as compatibility, user_id, distance FROM (SELECT
+        var users: any = await Database.rawQuery(`SELECT (sun + moon + ascendant)/3 as compatibility, user_id, latitude, longitude, max_distance_radar FROM (SELECT
             CASE WHEN sun < 1 THEN 100
                 WHEN sun < 2 THEN 70
                 WHEN sun < 3 THEN 100
@@ -63,15 +76,14 @@ export default class FeedsController {
                 WHEN ascendant < 12 THEN 70
             END as ascendant,
             user_id,
-            distance,
-            max_distance_radar
+            max_distance_radar,
+            latitude, longitude
             FROM (SELECT
                     ABS(${user.sun/30} - sun/30) as sun,
                     ABS(${user.moon/30} - moon/30) as moon,
                     ABS(${user.ascendant/30} - ascendant/30) as ascendant,
-                    (|/ ABS((${user.latitude} - latitude) - (${user.longitude} - longitude)))*111.11 as distance,
                     max_distance_radar,
-                    id as user_id
+                    id as user_id, latitude, longitude
                 FROM users WHERE
                 (birth_time <= (current_date - '${user.preffered_min_age} years'::interval))
                 AND (birth_time >= (current_date - '${user.preffered_max_age} years'::interval))
@@ -82,14 +94,19 @@ export default class FeedsController {
                 AND id != ${user.id}
                 AND id NOT IN (SELECT target_id FROM user_feed_views WHERE user_id = ${user.id})) as user_compatibility)
             as data
-            WHERE distance <= ${user.max_distance_radar} AND distance <= max_distance_radar
-            ORDER BY compatibility
-            LIMIT 1`)
-        if (!users.rows.length) {
+            ORDER BY compatibility`)
+
+        users = users.rows.map(u => {
+            const distance = getDistanceFromCoordsInKm({lat: u.latitude, lng: u.longitude}, {lat: user.latitude, lng: user.longitude})
+            return {...u, distance}
+        }).filter(u => u.distance <= u.max_distance_radar && u.distance <= user.max_distance_radar)
+
+        if (!users.length) {
             return response.noContent()
         }
-        const randomUser = await User.findOrFail(users.rows[0].user_id)
-        return {...randomUser.serialize(), compatibility: users.rows[0].compatibility, distance: users.rows[0].distance}
+
+        const randomUser = await User.findOrFail(users[0].user_id)
+        return {...randomUser.serialize(), compatibility: users[0].compatibility, distance: users[0].distance}
     }
 
     async avaliate({request, auth, response}) {
